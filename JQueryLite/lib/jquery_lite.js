@@ -70,6 +70,7 @@
 const DOMNodeCollection = __webpack_require__(1)
 
 const functionQueue = []; 
+const _docReady = false;
 
   let tester = document.querySelectorAll("li");
   // console.log(tester)
@@ -91,28 +92,89 @@ const functionQueue = [];
   }
     
   
-  $l.extend = () => {
-    const args = Array.from(arguments) 
-    const obj = {}
+  $l.extend = (base, ...otherObjs) => {
+    otherObjs.forEach((obj) => {
+      for (const key in obj) {
+        base[key] = obj[key]
+      }
+    })
+    return base;
+  }
+
+   $l.ajax = (options) => {
+    const request = new XMLHttpRequest();
+    request.open(options.method, options.URL)
+    request.onload = () => {
+      if (this.status >= 200 && this.status < 300) {
+        resolve(request.response);
+      } else {
+        reject({
+          status: this.status,
+          statusText: request.statusText
+        });
+    };
     
-    for (let i = 0; i < args.length; i++) {
-      for (let j in args[i]) {
-        obj[j] = args[i][j]
+    request.onerror = () => {
+      reject({
+        status: this.status,
+        statusText: request.statusText
+      });
+    }
+    request.send(data)
+    
+    const defaults = {
+      contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+      method: "GET",
+      url: "",
+      success: () => {},
+      error: () => {},
+      data: {},
+    };
+    
+    options = $l.extend(defaults, options);
+    options.method = options.method.toUpperCase();
+    
+    if (options.method === "GET") {
+      options.url += `?${toQueryString(options.data)}`
+    }
+    
+    }
+  }
+
+  
+  toQueryString = (obj) => {
+    let string = ""
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+        string += `${key}=${obj[key]}&`
       }
     }
-    return obj;
+    return string.substring(0, string.length - 1);
   }
-
-   $l.ajax = (obj) => {
-    const request = new XMLHttpRequest();
-    const method_name = `${obj.method}`.toUpperCase();
-    request.open(obj.method, obj.URL)
-  }
-
+  
+  getNodesFromDom = (selector) => {
+    const nodes = document.querySelectorAll(selector);
+    const nodesArray = Array.from(nodes);
+    return new DomNodeCollection(nodesArray);
+  };
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    _docReady = true;
+    functionQueue.forEach(func => func());
+  });
   // 
-  // execute = () => {
-  //   functionQueue.forEach(el => el())
-  // }
+  
+  registerDocReadyCallback = (func) => {
+  if (!_docReady) {
+    functionQueue.push(func);
+  } else {
+    func();
+    }
+  };
+
+  $l.execute = () => {
+    functionQueue.forEach(el => el())
+  }
 
 // $l(() => {
 // 
@@ -134,7 +196,131 @@ const functionQueue = [];
 /* 1 */
 /***/ (function(module, exports) {
 
-throw new Error("Module parse failed: Unexpected token (111:9)\nYou may need an appropriate loader to handle this file type.\n|     })\n|   }\n|     for (var i = 0; i < this.els.length; i++) {\n|       for (var j = 0; j < this.els[i].handlers[type].length; j++) {\n|         this.els[i].removeEventListener(type, handlers[type][j])");
+class DOMNodeCollection {
+  
+  constructor (htmlelements) {
+    this.els = htmlelements;
+  }
+  
+  html(str) {
+    if (str) {
+      this.els.forEach(el => el.innerHTML = str)
+    }
+    else {
+      return this.els[0].innerHTML; 
+    }
+  }
+  
+  empty() {
+    this.els.forEach(el => el.innerHTML = ""); 
+  }
+  
+  append(argument) {
+    if (this.els.length === 0) return ;
+    if (typeof argument === 'object' && 
+      !(argument instanceof DOMNodeCollection)) {
+        argument = $l(argument)
+      }
+    
+    if (typeof argument === 'string') {
+      this.els.forEach((el) => {
+        el.innerHTML += argument;
+      })
+    }  
+    
+    else if (argument instanceof DOMNodeCollection ) {
+      this.els.forEach( (el) => {
+        argument.els.forEach((child) => {
+          el.appendChild(child.cloneNode(true))
+        })
+        
+      })
+    }
+      
+  }
+  
+  attr(key, val) {
+   if (typeof val === "string") {
+     this.els.forEach(node => node.setAttribute(key, val));
+   } else {
+     return this.nodes[0].getAttribute(key);
+   }
+ }
+
+  addClass(name) {
+    this.els.forEach( (el) => el.classList.add(name));
+  } 
+  
+  removeClass(name) {
+    this.els.forEach( (el) => el.classList.remove(name));  
+  } 
+  
+  toggleClass(toggleClass) {
+    this.els.forEach( (el) => el.classList.toggle(toggleClass))
+  }
+  
+  children() {
+    let kiddos = [];
+    this.els.forEach( (el) => {
+      // console.log(node.children)
+      let childNodes = el.children 
+      kiddos = kiddos.concat(Array(childNodes))
+    })
+    return new DOMNodeCollection(kiddos)
+  }
+  
+  parent () {
+    let parentNodes = [];
+    this.els.forEach( (el) => {
+      if (!parentNodes.includes(el.parentNode)) 
+      parentNodes.push(el.parentNode);
+    })
+    return new DOMNodeCollection(parentNodes)
+  
+  }
+
+  find(selector) {
+    let arr = [];
+    this.els.forEach( el => { 
+      let nodeList = el.querySelectorAll(selector)
+      arr = arr.concat(Array(nodeList))
+    })
+    return new DOMNodeCollection(arr);
+  }
+  // 
+  remove() {
+    this.els.forEach((el) => el.parentNode.removeChild(el))
+
+  }
+  
+  on(type, fnc) {
+    this.els.forEach(el => {
+      el.addEventListener(type, fnc);
+      const eventKey = `jqe-${type}`;
+      if (typeof el[eventKey] === 'undefined') {
+        el[eventKey] = [];
+      }
+      el[eventKey].push(fnc);
+    });
+  }
+  
+  off(type) {
+    // debugger
+    this.els.forEach( (el) => {
+      const eventKey = `jqe-${type}`;
+      if (el[eventKey]) {
+        el[eventKey].forEach((callback) => {
+          el.removeEventListener(type, callback);
+        });
+      }
+      el[eventKey] = [];
+    })
+  }
+  
+}
+
+
+module.exports = DOMNodeCollection;
 
 /***/ })
 /******/ ]);

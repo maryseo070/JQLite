@@ -1,6 +1,7 @@
 const DOMNodeCollection = require('./dom_node_collection.js')
 
 const functionQueue = []; 
+const _docReady = false;
 
   let tester = document.querySelectorAll("li");
   // console.log(tester)
@@ -22,28 +23,89 @@ const functionQueue = [];
   }
     
   
-  $l.extend = () => {
-    const args = Array.from(arguments) 
-    const obj = {}
+  $l.extend = (base, ...otherObjs) => {
+    otherObjs.forEach((obj) => {
+      for (const key in obj) {
+        base[key] = obj[key]
+      }
+    })
+    return base;
+  }
+
+   $l.ajax = (options) => {
+    const request = new XMLHttpRequest();
+    request.open(options.method, options.URL)
+    request.onload = () => {
+      if (this.status >= 200 && this.status < 300) {
+        resolve(request.response);
+      } else {
+        reject({
+          status: this.status,
+          statusText: request.statusText
+        });
+    };
     
-    for (let i = 0; i < args.length; i++) {
-      for (let j in args[i]) {
-        obj[j] = args[i][j]
+    request.onerror = () => {
+      reject({
+        status: this.status,
+        statusText: request.statusText
+      });
+    }
+    request.send(data)
+    
+    const defaults = {
+      contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+      method: "GET",
+      url: "",
+      success: () => {},
+      error: () => {},
+      data: {},
+    };
+    
+    options = $l.extend(defaults, options);
+    options.method = options.method.toUpperCase();
+    
+    if (options.method === "GET") {
+      options.url += `?${toQueryString(options.data)}`
+    }
+    
+    }
+  }
+
+  
+  toQueryString = (obj) => {
+    let string = ""
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+        string += `${key}=${obj[key]}&`
       }
     }
-    return obj;
+    return string.substring(0, string.length - 1);
   }
-
-   $l.ajax = (obj) => {
-    const request = new XMLHttpRequest();
-    const method_name = `${obj.method}`.toUpperCase();
-    request.open(obj.method, obj.URL)
-  }
-
+  
+  getNodesFromDom = (selector) => {
+    const nodes = document.querySelectorAll(selector);
+    const nodesArray = Array.from(nodes);
+    return new DomNodeCollection(nodesArray);
+  };
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    _docReady = true;
+    functionQueue.forEach(func => func());
+  });
   // 
-  // execute = () => {
-  //   functionQueue.forEach(el => el())
-  // }
+  
+  registerDocReadyCallback = (func) => {
+  if (!_docReady) {
+    functionQueue.push(func);
+  } else {
+    func();
+    }
+  };
+
+  $l.execute = () => {
+    functionQueue.forEach(el => el())
+  }
 
 // $l(() => {
 // 

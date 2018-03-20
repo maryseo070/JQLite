@@ -92,27 +92,33 @@ class DOMNodeCollection {
   // 
   remove() {
     this.els.forEach((el) => el.parentNode.removeChild(el))
-    // while (this.els.parent().firstChild)  {
-    //   this.els.parent().removeChild(this.els.parent().firstChild)
-    // }
+
   }
   
   on(type, fnc) {
     this.els.forEach(el => {
-      el.addEventListener(type, fnc)
-    })
+      el.addEventListener(type, fnc);
+      const eventKey = `jqe-${type}`;
+      if (typeof el[eventKey] === 'undefined') {
+        el[eventKey] = [];
+      }
+      el[eventKey].push(fnc);
+    });
   }
   
   off(type) {
-    this.els.forEach( (el) => {  
-      el.removeEventListener(type, el.action)
+    // debugger
+    this.els.forEach( (el) => {
+      const eventKey = `jqe-${type}`;
+      if (el[eventKey]) {
+        el[eventKey].forEach((callback) => {
+          el.removeEventListener(type, callback);
+        });
+      }
+      el[eventKey] = [];
     })
   }
-    for (var i = 0; i < this.els.length; i++) {
-      for (var j = 0; j < this.els[i].handlers[type].length; j++) {
-        this.els[i].removeEventListener(type, handlers[type][j])
-      }  
-    }
+  
 }
 
 
