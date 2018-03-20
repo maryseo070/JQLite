@@ -107,7 +107,6 @@ class DOMNodeCollection {
   }
   
   off(type) {
-    // debugger
     this.els.forEach( (el) => {
       const eventKey = `jqe-${type}`;
       if (el[eventKey]) {

@@ -4,7 +4,6 @@ const functionQueue = [];
 const _docReady = false;
 
   let tester = document.querySelectorAll("li");
-  // console.log(tester)
   
   
   window.$l = (arg) => {
@@ -93,7 +92,6 @@ const _docReady = false;
     _docReady = true;
     functionQueue.forEach(func => func());
   });
-  // 
   
   registerDocReadyCallback = (func) => {
   if (!_docReady) {
@@ -106,17 +104,6 @@ const _docReady = false;
   $l.execute = () => {
     functionQueue.forEach(el => el())
   }
-
-// $l(() => {
-// 
-//   $l('li').on('click', sayboop)
-// 
-// })
-// 
-// function sayboop () {
-//   console.log('boop')
-// }
-// 
 
 
 
