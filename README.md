@@ -1,14 +1,14 @@
 # JQLite-Code-Intensive
-JQLite is a vanilla JavaScript DOM interaction library modeled after the main features of jQuery. 
+JQLite is a vanilla JavaScript DOM interaction library modeled after the main features of jQuery.
 
 JQLite allows users to:
 -  Make HTTP requests
--  Manipulate HTML elements and selectors 
+-  Manipulate HTML elements and selectors
 -  Access the children and parent nodes of DOM elements
 -  Make AJAX requests that return promises
- 
+
 ### Getting Started
-The easiest way to implement JQLite is to include the webpack output in your source code.
+The easiest way to implement JQLite is to download the JQLite library, add it into your project directory, and include the webpack output in your source code.
 
 ```
 <head>
@@ -20,19 +20,19 @@ The easiest way to implement JQLite is to include the webpack output in your sou
 
 ```
 
-### The $l wrapper 
+### The $l wrapper
 ``` $l ``` is commonly used throughout JQLite in conjunction with CSS selectors, returning DOMNodeCollection objects, or NodeLists. It can also be used to create DOMNodeCollection objects and to build HTML Elements with strings.
 
 ### Included DomNodeCollection Prototype Methods
 -  html
 -  empty
--  append(arg) 
+-  append(arg)
 -  attr(key, val)
 -  addClass(name)
 -  removeClass(name)
 -  toggleClass(class)
--  children 
--  parent 
+-  children
+-  parent
 -  find(selector)
 -  remove
 
