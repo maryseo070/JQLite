@@ -69,28 +69,28 @@
 
 const DOMNodeCollection = __webpack_require__(1)
 
-const functionQueue = []; 
+const functionQueue = [];
 const _docReady = false;
 
   let tester = document.querySelectorAll("li");
-  
-  
+
+
   window.$l = (arg) => {
-    if (arg instanceof HTMLElement) {
-      return new DOMNodeCollection(Array.from(arg))
+      if (arg instanceof HTMLElement) {
+      return new DOMNodeCollection([arg]);
     } else if (arg instanceof Function) {
-      if (document.readyState === 'complete') {
+      if (document.readyState === "complete") {
         arg();
       } else {
         functionQueue.push(arg);
-        document.addEventListener('DOMContentLoaded', execute) 
+        document.addEventListener("DOMContentLoaded", executeFunctions);
       }
     } else {
-      return new DOMNodeCollection(Array.from(document.querySelectorAll(arg)))
+      return new DOMNodeCollection(Array.from(document.querySelectorAll(arg)));
     }
-  }
-    
-  
+  };
+
+
   $l.extend = (base, ...otherObjs) => {
     otherObjs.forEach((obj) => {
       for (const key in obj) {
@@ -100,47 +100,6 @@ const _docReady = false;
     return base;
   }
 
-   $l.ajax = (options) => {
-    const request = new XMLHttpRequest();
-    request.open(options.method, options.URL)
-    request.onload = () => {
-      if (this.status >= 200 && this.status < 300) {
-        resolve(request.response);
-      } else {
-        reject({
-          status: this.status,
-          statusText: request.statusText
-        });
-    };
-    
-    request.onerror = () => {
-      reject({
-        status: this.status,
-        statusText: request.statusText
-      });
-    }
-    request.send(data)
-    
-    const defaults = {
-      contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-      method: "GET",
-      url: "",
-      success: () => {},
-      error: () => {},
-      data: {},
-    };
-    
-    options = $l.extend(defaults, options);
-    options.method = options.method.toUpperCase();
-    
-    if (options.method === "GET") {
-      options.url += `?${toQueryString(options.data)}`
-    }
-    
-    }
-  }
-
-  
   toQueryString = (obj) => {
     let string = ""
     for (const key in obj) {
@@ -150,33 +109,63 @@ const _docReady = false;
     }
     return string.substring(0, string.length - 1);
   }
-  
-  getNodesFromDom = (selector) => {
-    const nodes = document.querySelectorAll(selector);
-    const nodesArray = Array.from(nodes);
-    return new DomNodeCollection(nodesArray);
+
+   $l.ajax = (options) => {
+     return new Promise((resolve, reject) => {
+       const request = new XMLHttpRequest();
+       const method = options.method ? `${options.method}`.toUpperCase() : "GET";
+       const data = options.data ? options.data : {};
+       const url = options.url;
+       const success = options.success ? options.success : {};
+
+       request.open(method, url)
+       request.onload = () => {
+         if (request.status >= 200 && request.status < 300) {
+           resolve(JSON.parse(request.response));
+           // options.success(request.response)
+         } else {
+           reject({
+             status: request.status,
+             statusText: request.statusText
+           });
+         }};
+
+         request.onerror = () => {
+           reject({
+             status: request.status,
+             statusText: request.statusText
+           });
+         }
+
+         request.send(data)
+     })
   };
-  
-  document.addEventListener('DOMContentLoaded', () => {
-    _docReady = true;
-    functionQueue.forEach(func => func());
-  });
-  
-  registerDocReadyCallback = (func) => {
-  if (!_docReady) {
-    functionQueue.push(func);
-  } else {
-    func();
-    }
-  };
 
-  $l.execute = () => {
-    functionQueue.forEach(el => el())
-  }
+    $l.executeFunctions = () => {
+      functionQueue.forEach(el => el());
+    };
 
 
+  //
+  // getNodesFromDom = (selector) => {
+  //   const nodes = document.querySelectorAll(selector);
+  //   const nodesArray = Array.from(nodes);
+  //   return new DomNodeCollection(nodesArray);
+  // };
 
 
+  // registerDocReadyCallback = (func) => {
+  // if (!_docReady) {
+  //   functionQueue.push(func);
+  // } else {
+  //   func();
+  //   }
+  // };
+
+  // document.addEventListener('DOMContentLoaded', () => {
+  //   _docReady = true;
+  //   functionQueue.forEach(func => func());
+  // });
 
 
 /***/ }),
